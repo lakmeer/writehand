@@ -111,22 +111,4 @@ Model "claude" {
     max_tokens 1024
 
 }
-
-default_model gpt4o
-
 ```
-
-```yaml
-# writehand.yml
-model: gpt-3
-editor: vscode
-```
-
-
-
-
-
-
-
-
-
