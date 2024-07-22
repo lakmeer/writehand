@@ -1,21 +1,25 @@
 # Writehand
 
-An agnostic, practical AI workflow for coding.
+A toolchain-agnostic, practical AI workflow for coding.
 
 ## Notes
 
 - Program is invoked on the project root
 - Config via `writehand.yml`
-- Works with local models
+- Works with local models when available
 - Comments in source code can contain various pragmas which invoke specific behaviours in the AI
+- Editor plugin binds a few hotkeys to the program
+  - Invoke
+  - Accept
+  - Reject
 
 
-## Command Pragmes
+## Command Pragmas
 
-### !
+### !(task description)
 
-Perform any task. Results will occur in whichever files are relevant, or
-create new files. The comment will be removed.
+Perform a task. Results will occur in whichever files are relevant, or newly
+created files. The pragma comment will be removed.
 
     // >> !write some tests to cover this function
 
@@ -27,27 +31,102 @@ create new files. The comment will be removed.
 
 ## Query Pragmas
 
-### ?
+### ?(question)
 
 Query pragmas will only result in comments being added to source files.
 Pragma line will be replaced with the answer using `// <<` format..
 
-    // >> ? What is the purpose of this code?
+    // >> ?What is the purpose of this code?
 
     // << This code is used to authenticate the user using
     // << a middleware pattern
 
+## Pragma Modifiers
 
-## Context Pragmas
+### --option (value)
+
+Applied to an existing pragma (doesn't count as a pragma by itself). Overrides
+a config option for the duration that the pragma is being executed. Any config
+supported by `writehand.yml` can be overwritten this way.
+
+    // >> !write some tests to cover this function --model gpt-3
+
+    // >> !suggest a function that computes the area of a circle --temp 0.8
+
+
+## Config Pragmas
 
 ### +context
 Any file with a command pragma will automatically include other files with
-matching `+context` as reference in the prompt.
+matching `+context` as reference in the prompt, and help the model navigate
+relevant parts of the codebase.
 
-    // >> +context Authenticaion, Login
+    // >> +context Authentication, Login
+    // >> +context Database
 
 ### +always
 This file will always be included as context.
 
-### +never
+### +ignore
 This file will never be included as context.
+
+### +include
+When this file is being considered as context, fetches another specific file
+either by relative path, or a url which will be downloaded and cached. Supports
+globbing when local. Shorthand `@` represents the root of the project.
+
+    // >> +include ./utils.js
+    // >> +include https://raw.githubusercontent.com/.../utils.js
+    // >> +include @/src/components/**/*.jsx
+
+## Configuration Options
+
+Config is placed at the project root in `writehand.yml`. When the program is
+invoked, it will walk up the filesystem until it finds a config file, and then
+consider that location to be the root of the project.
+
+### Models
+
+Supplies configuration for AI models. Different models can be applied to
+different tasks.
+
+```
+Model "codex" {
+    provider "OpenAI" {
+        url "https://api.openai.com/v1/engines/davinci-codex/completions"
+        key $env("OPENAI_API_KEY")
+    }
+    temp 0.8
+    max_tokens 1024
+}
+
+Model "claude" {
+    provider "Anthropic" {
+        url "https://api.anthropic.com/v1/complete"
+        key $env("OPENAI_API_KEY")
+        model_name "claude-3-5-sonnet-20240620"
+    }
+    system "You are an expert in web development with a specialty in Typescript and Svelte"
+    temp 0.8
+    max_tokens 1024
+
+}
+
+default_model gpt4o
+
+```
+
+```yaml
+# writehand.yml
+model: gpt-3
+editor: vscode
+```
+
+
+
+
+
+
+
+
+
