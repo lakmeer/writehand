@@ -1,7 +1,7 @@
 
 import { readFileSync, existsSync } from 'fs'
 import { join } from 'path'
-import { parse as parse_kdl } from 'kdljs'
+import { parse as parse_kdl, type Node as KDLNode } from 'kdljs'
 import { parse_gitignore } from './utils'
 
 import type { Env } from './startup'
@@ -65,7 +65,7 @@ export default class Config {
   root_path:  string
   file_path:  string
   source:     string
-  parse:      ReturnType<typeof parse_kdl>
+  parse:      KDLNode[]
 
   // Config object
   Model:      Record<string, Spec.Model>
@@ -81,9 +81,8 @@ export default class Config {
     }
 
     this.source = fill_envars(readFileSync(this.file_path, 'utf8'), env)
-    this.parse  = parse_kdl(this.source)
 
-
+    // Apply default config
     this.Model = {
       default: {}
     }
@@ -95,6 +94,48 @@ export default class Config {
       exclude: [],
       include: [],
     }
+
+    // Apply discovered config
+    const kdl_doc = parse_kdl(this.source)
+    if (kdl_doc.errors.length) throw `Error parsing writehand.kdl: ${kdl_doc.errors.join('\n')}`
+    this.parse = kdl_doc.output as KDLNode[]
+    this.apply_config_file()
+  }
+
+
+  apply_config_file () {
+    this.parse.forEach((node:KDLNode) => {
+
+      switch (node.name) {
+        case 'Model':
+          this.Model[node.name] = {}
+          break
+
+        case 'FileRules':
+          node.children.forEach((child:KDLNode) => {
+            let key = child.name
+            let value
+
+            switch (key) {
+              case 'respect_gitignore': value = child.values[0] as boolean; break
+              case 'exclude_non_text':  value = child.values[0] as boolean; break
+              case 'exclude_dotfiles':  value = child.values[0] as boolean; break
+              case 'exclude':           value = child.values as string[]; break
+              case 'include':           value = child.values as string[]; break
+
+              default: throw `Unknown node type in writehand.kdl: ${child.name}`
+            }
+
+            // @ts-ignore: Can't be bothered jumping required hoops
+            this.FileRules[key] = value
+          })
+
+          break
+
+        default:
+          throw `Unknown node type in writehand.kdl: ${node.name}`
+      }
+    })
   }
 
   generate_exclude_list ():string[] {
