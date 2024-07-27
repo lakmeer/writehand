@@ -1,7 +1,11 @@
 
-import { readFileSync } from 'fs'
+import { readFileSync, existsSync } from 'fs'
 import { join } from 'path'
-import parse from 'parse-gitignore'
+import { parse as parse_kdl } from 'kdljs'
+import { parse_gitignore } from './utils'
+
+import type { Env } from './startup'
+
 
 const DEFAULT_EXCLUDES = [
   '.git',
@@ -13,6 +17,34 @@ const DEFAULT_EXCLUDES = [
   'tmp',
   'temp',
 ]
+
+
+// Types
+
+namespace Spec {
+  export type Model = {}
+
+  export type FileRules = {
+    respect_gitignore:  boolean
+    exclude_non_text:   boolean
+    exclude_dotfiles:   boolean
+    exclude:            string[]
+    include:            string[]
+  }
+}
+
+
+// Helpers
+
+function fill_envars (source:string, env:Env) {
+  return source.replaceAll(/\$([_A-Z0-9]+)/g, (_, key) => {
+    if (env[key]) {
+      return `"${env[key]}"`
+    } else {
+      throw `Config file requires environment variable $${key}, but it was not found.`
+    }
+  })
+}
 
 
 
@@ -28,29 +60,29 @@ const DEFAULT_EXCLUDES = [
 // - FileRules
 //
 
-type ModelSpec = {}
-
-type FileRulesSpec = {
-  respect_gitignore:  boolean
-  exclude_non_text:   boolean
-  exclude_dotfiles:   boolean
-  exclude:            string[]
-  include:            string[]
-}
-
 export default class Config {
 
-  root_path: string
+  root_path:  string
+  file_path:  string
+  source:     string
+  parse:      ReturnType<typeof parse_kdl>
 
-  Model: Record<string, ModelSpec>
+  // Config object
+  Model:      Record<string, Spec.Model>
+  FileRules:  Spec.FileRules
 
-  FileRules: FileRulesSpec
 
-  constructor (root_path: string) {
+  constructor (root_path:string, env:Env) {
     this.root_path = root_path
+    this.file_path = join(this.root_path, 'writehand.kdl')
 
-    // TODO: Parse KDL
-    // TODO: Convert to known structure
+    if (!existsSync(this.file_path)) {
+      throw `No writehand.kdl file found in root path ${this.root_path}`
+    }
+
+    this.source = fill_envars(readFileSync(this.file_path, 'utf8'), env)
+    this.parse  = parse_kdl(this.source)
+
 
     this.Model = {
       default: {}
@@ -65,14 +97,14 @@ export default class Config {
     }
   }
 
-  generate_exclude_list () {
-    const excludes = new Set()
+  generate_exclude_list ():string[] {
+    const excludes = new Set<string>()
 
     DEFAULT_EXCLUDES.forEach(excludes.add, excludes)
     this.FileRules.exclude.forEach(excludes.add, excludes)
 
     if (this.FileRules.respect_gitignore) {
-      parse(join(this.root_path, '.gitignore')).patterns.forEach(excludes.add, excludes)
+      parse_gitignore(join(this.root_path, '.gitignore')).forEach(excludes.add, excludes)
     }
 
     if (this.FileRules.exclude_dotfiles) {

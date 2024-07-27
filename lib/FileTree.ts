@@ -1,13 +1,12 @@
-import Config from './Config.ts'
+import Config from './Config'
 
 import * as fs from 'node:fs'
 import ignore from 'ignore'
 import { join } from 'node:path'
 import { diff } from './diff'
-import { isText } from 'istextorbinary'
-import { is_a_file, is_a_dir } from './utils.ts'
+import { is_a_file, is_a_dir, is_text } from './utils'
 
-import { SIGIL, PRAGMA_CONTEXT, PRAGMA_COMMAND, PRAGMA_QUERY } from './const.ts'
+import { SIGIL, PRAGMA_CONTEXT, PRAGMA_COMMAND, PRAGMA_QUERY } from './const'
 
 
 // Types
@@ -19,6 +18,7 @@ type PragmaFlag = {
 
 type Pragma = {
   type:   'command' | 'query' | 'context' | 'always' | 'never' | 'include'
+  file:   string
   text:   string
   args:   string[]
   flags:  PragmaFlag[]
@@ -45,14 +45,25 @@ class File {
     tags:   string[]
   }
 
+
   constructor (root_path:string, path:string, ignore_non_text:boolean) {
     this.path     = path.replace(root_path, '')
     this.contents = fs.readFileSync(path, 'utf-8')
+    this.context  = { always: false, never:  false, tags:   [], }
     this.pragmas  = this.scan_pragmas(ignore_non_text)
+
+    for (const pragma of this.pragmas) {
+      switch (pragma.type) {
+        case 'always':  this.context.always = true; break
+        case 'never':   this.context.never  = true; break
+        case 'context': this.context.tags = this.context.tags.concat(pragma.args); break
+      }
+    }
   }
 
+
   scan_pragmas (ignore_non_text:boolean) {
-    if (!isText(null, this.contents) && ignore_non_text) return []
+    if (!is_text(this.contents) && ignore_non_text) return []
 
     const pragmas: Pragma[] = []
     const lines = this.contents.split('\n')
@@ -68,8 +79,8 @@ class File {
     return pragmas
   }
 
-  parse_pragma (line:string, number:number): Pragma {
 
+  parse_pragma (line:string, number:number): Pragma {
     line = line.split(SIGIL)[1].trim()
 
     let type:Pragma['type']
@@ -81,7 +92,7 @@ class File {
     switch (line[0]) {
       case PRAGMA_COMMAND: 
         type = 'command';
-        args = line.slice(1)
+        args.push(line.slice(1))
         break
 
       case PRAGMA_QUERY:   type = 'query'; break
@@ -93,13 +104,16 @@ class File {
           case '+never':  type = 'never'; break
           case '+include':
             type = 'include';
-            args = line.split(' ')[1]
+            args = [ line.split(' ')[1] ]
             break
           default: 
             type = 'context'
             args = line.split(' ')[1].split(',').map(arg => arg.trim())
         }
         break
+
+      default:
+        throw `Unknown pragma type: ${line[0]}`
     }
 
     const pragma:Pragma = {
@@ -132,13 +146,14 @@ export default class FileTree {
   excludes:  string[]
   all:       string[]
   tree:      string
+  dirs:      string[]
   files:     File[]
 
   constructor (root_path:string, config:Config) {
     this.root_path = root_path
     this.excludes = config.generate_exclude_list()
 
-    this.all = fs.readdirSync(this.root_path, { recursive: true })
+    this.all = fs.readdirSync(this.root_path, { encoding: 'utf-8', recursive: true })
       .filter(ignore().add(this.excludes).createFilter())
       .map(path => join(this.root_path, path))
 
@@ -147,7 +162,7 @@ export default class FileTree {
     this.files = this.all.filter(is_a_file).map(path => new File(root_path, path, config.FileRules.exclude_non_text))
 
     if (config.FileRules.exclude_non_text) {
-      this.files = this.files.filter(file => isText(null, file.contents))
+      this.files = this.files.filter(file => is_text(file.contents))
     }
   }
 

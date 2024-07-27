@@ -1,8 +1,11 @@
+import dotenv, { type DotenvParseOutput } from 'dotenv'
 import { join } from 'path'
 import { parseArgs } from 'util'
 
-import Config   from './Config.ts'
-import FileTree from './FileTree.ts'
+import Config   from './Config'
+import FileTree from './FileTree'
+
+export type Env = DotenvParseOutput
 
 
 //
@@ -12,20 +15,20 @@ import FileTree from './FileTree.ts'
 // Parse args
 const { values } = parseArgs({
   args: Bun.argv,
+  strict: true,
+  allowPositionals: true,
   options: {
     root: {
       type: 'string',
     },
   },
-  strict: true,
-  allowPositionals: true
 })
 
 // Set cwd
-let root_path = (values.root) ? join(process.cwd(), values.root) : process.cwd()
+let root_path:string = (values.root) ? join(process.cwd(), values.root) : process.cwd()
 
 // Read env
-const env = require('dotenv').config({ path: join(root_path, '.env') }).parsed
+const env:Env = dotenv.config({ path: join(root_path, '.env') }).parsed ?? {}
 
 // Build env and file tree
 const config    = new Config(root_path, env)

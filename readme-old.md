@@ -98,7 +98,7 @@ different tasks.
 Model "codex" {
     provider "OpenAI" {
         url "https://api.openai.com/v1/engines/davinci-codex/completions"
-        key $env("OPENAI_API_KEY")
+        key $OPENAI_API_KEY
     }
     temp 0.8
     max_tokens 1024
@@ -107,7 +107,7 @@ Model "codex" {
 Model "claude" {
     provider "Anthropic" {
         url "https://api.anthropic.com/v1/complete"
-        key $env("OPENAI_API_KEY")
+        key $ANTHROPIC_API_KEY
         model_name "claude-3-5-sonnet-20240620"
     }
     system "You are an expert in web development with a specialty in Typescript and Svelte"

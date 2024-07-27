@@ -4,13 +4,13 @@
 //
 
 // TODO:
-// [ ] Read env
+// [X] Read env
+// [X] Shift cwd if required
 // [ ] Read config file
 //   [ ] KDL library
-// [ ] Set up state
+// [X] Set up state
 // [ ] Prepare models
 // [ ] Validate setup
-// [ ] Shift cwd if required
 // [ ] Compile filetree
 //   [ ] Crawl filesystem
 //   [ ] Build tree object
@@ -31,8 +31,12 @@
 // [ ] Emit report
 
 
-import state from './lib/startup.ts'
+import state from './lib/startup'
 
 const work = state.file_tree.get_executable_pragmas()
+
+
+// Prepare models
+
 
 console.log(work)
