@@ -4,6 +4,8 @@ import { join } from 'path'
 import { parse as parse_kdl, type Node as KDLNode } from 'kdljs'
 import { parse_gitignore } from './utils'
 
+import * as Providers from './providers'
+
 import type { Env } from './startup'
 
 
@@ -59,6 +61,8 @@ function fill_envars (source:string, env:Env) {
 // - Model
 // - FileRules
 //
+// TODO: Can I use some kind of KDL spec to enforce config?
+//
 
 export default class Config {
 
@@ -108,7 +112,16 @@ export default class Config {
 
       switch (node.name) {
         case 'Model':
-          this.Model[node.name] = {}
+          let name          = node.values[0]
+          let provider_node = node.children.filter(node => node.name === 'provider')[0]
+          let provider_key  = (provider_node?.values[0] ?? "") as keyof typeof Providers
+
+          if (!provider_node) throw `Provider not specified for Model '${name}'`
+          if (!Providers[provider_key]) throw `Unknown Model provider: ${provider_key}`
+
+          // @ts-ignore: Please die
+          this.Model[name] = new Providers[provider_key]([node])
+
           break
 
         case 'FileRules':
@@ -134,6 +147,9 @@ export default class Config {
 
         default:
           throw `Unknown node type in writehand.kdl: ${node.name}`
+
+
+        console.log(this)
       }
     })
   }

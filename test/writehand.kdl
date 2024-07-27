@@ -3,7 +3,6 @@
 
 Model "claude" {
     provider "Anthropic" {
-        url "https://api.anthropic.com/v1/complete"
         key $ANTHROPIC_API_KEY
         model_name "claude-3-5-sonnet-20240620"
     }
@@ -11,6 +10,7 @@ Model "claude" {
     temp 0.8
     max_tokens 1024
 }
+
 
 FileRules {
     exclude_dotfiles false
