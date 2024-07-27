@@ -24,7 +24,9 @@ const DEFAULT_EXCLUDES = [
 // Types
 
 namespace Spec {
-  export type Model = {}
+  export type Model = {
+    is_default: boolean
+  }
 
   export type FileRules = {
     respect_gitignore:  boolean
@@ -87,9 +89,7 @@ export default class Config {
     this.source = fill_envars(readFileSync(this.file_path, 'utf8'), env)
 
     // Apply default config
-    this.Model = {
-      default: {}
-    }
+    this.Model = { }
 
     this.FileRules = {
       respect_gitignore: true,
@@ -148,11 +148,32 @@ export default class Config {
         default:
           throw `Unknown node type in writehand.kdl: ${node.name}`
 
-
-        console.log(this)
       }
     })
+
+
+    // Check if one of the models is marked as default.
+    // If not, pick the first one and mark it as default.
+
+    let set_default = ""
+
+    for (const key in this.Model) {
+      if (this.Model[key].is_default) {
+        if (set_default) throw "More than one dfeault model set in writehand.kdl"
+        set_default = key
+      }
+    }
+
+    if (!set_default) this.Model[Object.keys(this.Model)[0]].is_default = true
   }
+
+
+  get_default_model () {
+    for (const key in this.Model) {
+      if (this.Model[key].is_default) return this.Model[key]
+    }
+  }
+
 
   generate_exclude_list ():string[] {
     const excludes = new Set<string>()

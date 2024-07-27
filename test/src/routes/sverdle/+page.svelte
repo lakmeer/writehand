@@ -1,4 +1,6 @@
 <script lang="ts">
+	// >> +context Sverdle
+
 	import { confetti } from '@neoconfetti/svelte';
 	import { enhance } from '$app/forms';
 	import type { PageData, ActionData } from './$types';

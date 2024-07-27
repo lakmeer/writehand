@@ -35,7 +35,7 @@ const config    = new Config(root_path, env)
 const file_tree = new FileTree(root_path, config)
 
 // Export state
-export default {
+export {
   config,
   file_tree,
 }

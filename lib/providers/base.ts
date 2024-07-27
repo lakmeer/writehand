@@ -16,10 +16,12 @@ export default class ModelProvider {
   system:     string      // The system prompt
   temp:       number      // Model temperature
   max_tokens: number      // Max tokens (in response)
+  is_default: boolean     // Is this the default model
 
   constructor (config:Document) {
     this.#config = config
     this.#key_memo = {}
+    this.is_default = false
   }
 
   get_kdl_key<T> (q:string, multiple:boolean = false):T|undefined {
