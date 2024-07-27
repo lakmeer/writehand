@@ -13,6 +13,10 @@ A toolchain-agnostic, practical AI workflow for coding.
   - Accept
   - Reject
 
+### Todos and Ideas
+
+- A 'suggest' mode that just reads the whole codebase and proposes fixes or refactors
+
 
 ## Command Pragmas
 
@@ -67,7 +71,7 @@ relevant parts of the codebase.
 ### +always
 This file will always be included as context.
 
-### +ignore
+### +never
 This file will never be included as context.
 
 ### +include
@@ -109,6 +113,15 @@ Model "claude" {
     system "You are an expert in web development with a specialty in Typescript and Svelte"
     temp 0.8
     max_tokens 1024
-
 }
+
+
+FileRules {
+    respect_gitignore true  // default true - use the gitignore if it exists
+    exclude_non_text true   // default true - guesses to ignore for images etc
+    exclude_dotfiles true   // default true - ignore files starting with a dot
+    exclude "node_modules" ".sveltekit"      // manual excludes
+    include "package.json" "tsconfig.json"   // manual includes
+}
+
 ```

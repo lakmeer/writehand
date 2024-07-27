@@ -1,0 +1,18 @@
+{
+  "name": "writehand",
+  "version": "1.0.0",
+  "description": "An agnostic, practical AI workflow for coding.",
+  "author": "https://github.com/lakmeer",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "cli-highlight": "^2.1.11",
+    "diff": "^5.2.0",
+    "dotenv": "^16.4.5",
+    "ignore": "^5.3.1",
+    "istextorbinary": "^9.5.0",
+    "parse-gitignore": "^2.0.0"
+  }
+}
