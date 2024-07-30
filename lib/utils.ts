@@ -19,3 +19,13 @@ export const parse_gitignore = (path:string):string[] => {
     .map((line) => line.trim())
     .filter((line) => line !== '')
 }
+
+export const align_margin = (str:string) => {
+  const lines = str.split('\n')
+  while (lines[0].trim() === '') lines.shift()
+  const margin = lines[0].search(/\S/)
+  const rx = new RegExp(`^\\s{1,${margin}}`)
+  return lines.map((line) => line.replace(rx, '')).join('\n').trim();
+}
+
+export const code_block = (str:string) => '```\n' + str + '\n```\n'

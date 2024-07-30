@@ -115,13 +115,17 @@ Model "claude" {
     max_tokens 1024
 }
 
-
 FileRules {
     respect_gitignore true  // default true - use the gitignore if it exists
     exclude_non_text true   // default true - guesses to ignore for images etc
     exclude_dotfiles true   // default true - ignore files starting with a dot
     exclude "node_modules" ".sveltekit"      // manual excludes
     include "package.json" "tsconfig.json"   // manual includes
+}
+
+DefaultCommand {
+    model "codex"
+    command "Suggest improvements"
 }
 
 ```

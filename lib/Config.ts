@@ -5,6 +5,7 @@ import { parse as parse_kdl, type Node as KDLNode } from 'kdljs'
 import { parse_gitignore } from './utils'
 
 import * as Providers from './providers'
+import type { ModelProvider } from './providers'
 
 import type { Env } from './startup'
 
@@ -24,10 +25,6 @@ const DEFAULT_EXCLUDES = [
 // Types
 
 namespace Spec {
-  export type Model = {
-    is_default: boolean
-  }
-
   export type FileRules = {
     respect_gitignore:  boolean
     exclude_non_text:   boolean
@@ -74,7 +71,7 @@ export default class Config {
   parse:      KDLNode[]
 
   // Config object
-  Model:      Record<string, Spec.Model>
+  Model:      Record<string, ModelProvider>
   FileRules:  Spec.FileRules
 
 

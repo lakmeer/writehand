@@ -1,5 +1,8 @@
-
+import { Eta } from 'eta'
 import { query, type Document } from 'kdljs'
+import type { PromptBundle } from '../../types'
+import { code_block } from '../utils'
+import * as Highlight from 'cli-highlight'
 
 
 //
@@ -7,6 +10,9 @@ import { query, type Document } from 'kdljs'
 //
 // Probably will never be ued directly, just here to define required methods
 // and config values for use by Writehand.
+//
+// TODO: Move Eta templater to a singleton provider so it can be configured and cached
+//
 
 export default class ModelProvider {
 
@@ -44,4 +50,57 @@ export default class ModelProvider {
     throw 'ModelProvider: `enforce_requirements` not implemented'
   }
 
+  template_render (template:string, data:Record<string, any>):string {
+    const eta = new Eta({ useWith: true, rmWhitespace: false, autoEscape: false })
+    return eta.renderString(template.trim(), data)
+  }
+
+  compile_prompt_preamble (bundle:PromptBundle) {
+    return this.template_render(PROMPT_TEMPLATE, bundle)
+  }
 }
+
+
+const PROMPT_TEMPLATE = `
+Please complete the provided task by outputting modified versions of any of the
+supplied files, or entirely new files. Mark note the start of each file like
+this: \`### /path/to/filename.ext\` and use markdown code blocks to surround
+code.
+
+## Task description
+Please <%= command %>
+
+
+## Project structure
+<%= file_tree %>
+
+
+## Main Source File
+This file is the focus of the work that needs to be done.
+
+### <%= main_file.path %>
+
+\`\`\`
+<%= main_file.contents %>
+\`\`\`
+
+
+## Auxilliary files
+These files may provide useful reference for completing the task.
+
+<% for (const file of files) { %>
+### <%= file.path %>
+
+\`\`\`
+<%= file.contents %>
+\`\`\`
+
+<% } %>
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras sollicitudin quam
+eget libero pulvinar id condimentum velit sollicitudin. Proin cursus
+scelerisque dui ac condimentum. Nullam quis tellus leo. Morbi consectetur,
+lectus a blandit tincidunt, tortor augue tincidunt nisi, sit amet rhoncus
+tortor velit eu felis. 
+`
+

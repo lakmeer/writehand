@@ -1,25 +1,7 @@
 import * as fs from 'node:fs'
 import { is_text } from './utils'
 import { SIGIL, PRAGMA_CONTEXT, PRAGMA_COMMAND, PRAGMA_QUERY } from './const'
-
-
-// Types
-
-type PragmaFlag = {
-  name: 'model' | 'system'
-  value: string
-}
-
-type Pragma = {
-  type:   'command' | 'query' | 'context' | 'always' | 'never' | 'include'
-  file:   string
-  text:   string
-  args:   string[]
-  flags:  PragmaFlag[]
-  line:   number
-  length: number // number of lines covered
-}
-
+import type { Pragma, PragmaFlag } from '../types'
 
 
 //
